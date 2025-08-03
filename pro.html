@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drowsiness Detection - Baby Safety</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(to bottom, #0d1440, #1e2956, #3a3f7a);
+            color: #fff;
+            text-align: center;
+            overflow: hidden;
+        }
+        .sky {
+            position: absolute;
+            width: 100%;
+            height: 100vh;
+            background: linear-gradient(to bottom, #0d1440, #1e2956, #3a3f7a);
+            overflow: hidden;
+        }
+        .star {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: white;
+            border-radius: 50%;
+            opacity: 0.8;
+            animation: twinkle 1.5s infinite alternate;
+        }
+        @keyframes twinkle {
+            0% { opacity: 0.3; }
+            100% { opacity: 1; }
+        }
+        
+        
+        @keyframes float {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-20px); }
+        }
+                @keyframes rock {
+            0% { transform: rotate(-5deg); }
+            100% { transform: rotate(5deg); }
+        }
+        .container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
+            width: 90%;
+            max-width: 400px;
+            transition: 0.3s;
+        }
+        .container:hover {
+            box-shadow: 0 0 25px rgba(255, 255, 255, 0.6);
+        }
+        .input-field {
+            width: 90%;
+            padding: 12px;
+            margin: 10px 0;
+            border: none;
+            border-radius: 8px;
+            outline: none;
+            font-size: 16px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            text-align: center;
+            box-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
+            transition: 0.3s;
+        }
+        .input-field:focus {
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.8);
+            background: rgba(255, 255, 255, 0.2);
+        }
+        .btn {
+            background: #ffcc00;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: 0.3s;
+        }
+        .btn:hover {
+            background: #ffdb4d;
+            box-shadow: 0 0 10px rgba(255, 204, 0, 0.7);
+        }
+        .info-button {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: #ffcc00;
+            padding: 10px 15px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 18px;
+            box-shadow: 0 0 10px rgba(255, 204, 0, 0.7);
+        }
+        .info-panel {
+            position: absolute;
+            top: 50px;
+            right: 20px;
+            width: 280px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 15px;
+            border-radius: 10px;
+            display: none;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
+        }
+        .video-feed {
+            width: 100%;
+            max-width: 640px;
+            margin: 20px auto;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
+        }
+        h1 {
+            color: #fff;
+        }
+        .btn {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 16px;
+            color: white;
+            background-color: #ffcc00;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: 0.3s;
+        }
+        .btn:hover {
+            background-color: #ffdb4d;
+            box-shadow: 0 0 10px rgba(255, 204, 0, 0.7);
+        }
+        /* Loading Screen Styles */
+        #loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(13, 20, 64, 0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            z-index: 1000;
+        }
+        #loading-screen p {
+            font-size: 24px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div id="loading-screen">
+        <p>Loading: <span id="loading-percentage">0%</span></p>
+    </div>
+
+    <div class="sky"></div>
+
+    <!-- Welcome Screen -->
+    <div id="welcome-container" class="container" style="display: none;">
+        <h1>Welcome to the Drowsiness Detection System</h1>
+        <p>Twilio Account alredy exists</p>
+        <a href="#" class="btn" onclick="showLogin()">Go to Login</a>
+        <p>Create Twilio Account <a href="https://login.twilio.com/u/signup" onclick="showSignUp()">SignUp</a></p>
+    </div>
+
+    <!-- Login Screen -->
+    <div id="login-container" class="container" style="display: none;">
+        <h2>Login</h2>
+        <input type="text" id="login-username" class="input-field" placeholder="Username">
+        <input type="password" id="login-password" class="input-field" placeholder="Password">
+        <button class="btn" onclick="checkLogin()">Login</button>
+        <p>New user? <a href="#" onclick="showRegistration()">Register</a></p>
+    </div>
+
+    <!-- Registration & Data Form -->
+    <div id="data-container" class="container" style="display: none;">
+        <h2>Drowsiness Detection System</h2>
+        <input type="text" class="input-field" id="username" placeholder="Create Username">
+        <input type="password" class="input-field" id="password" placeholder="Create Password">
+        <input type="text" class="input-field" id="twilio_sid" placeholder="Twilio SID">
+        <input type="text" class="input-field" id="twilio_token" placeholder="Twilio Auth Token">
+        <input type="text" class="input-field" id="twilio_number" placeholder="Twilio Phone Number">
+        <input type="text" class="input-field" id="parent_number" placeholder="Parent Phone Number">
+        <button class="btn" onclick="saveUserData()">Save & Start</button>
+    </div>
+
+    <div class="info-button" onclick="toggleInfo()">ℹ️</div>
+    <div class="info-panel" id="info-panel">
+        <h3>About This Project</h3>
+        <p>This system detects drowsiness in babysitters using OpenCV and Twilio SMS alerts.</p>
+        <p>When drowsiness is detected, an alert is sent to the parent.</p>
+    </div>
+
+    <script>
+        // Loading Screen Logic
+        window.onload = function () {
+            let percentage = 0;
+            const loadingElement = document.getElementById("loading-percentage");
+            const loadingScreen = document.getElementById("loading-screen");
+            const welcomeContainer = document.getElementById("welcome-container");
+
+            const interval = setInterval(() => {
+                percentage += 2; // Increment by 2% every 50ms
+                loadingElement.textContent = percentage + "%";
+                if (percentage >= 100) {
+                    clearInterval(interval);
+                    loadingScreen.style.display = "none";
+                    welcomeContainer.style.display = "block";
+                    createStars(); // Initialize stars after loading
+                }
+            }, 50); // Adjust timing for desired speed (50ms = ~2.5s total)
+        };
+
+        // Show video feed after successful login or registration
+        function showVideoFeed() {
+            document.body.innerHTML += '<div id="video-container" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);"><img src="/video_feed" style="width: 100%; max-width: 640px; border-radius: 10px; box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);"></div>';
+            document.getElementById("login-container").style.display = "none";
+            document.getElementById("data-container").style.display = "none";
+        }
+
+        // Check if the username and password match stored users
+        function checkLogin() {
+            let users = JSON.parse(localStorage.getItem("users")) || {};
+            let enteredUsername = document.getElementById("login-username").value.trim();
+            let enteredPassword = document.getElementById("login-password").value;
+
+            if (!enteredUsername || !enteredPassword) {
+                alert("Please enter both username and password.");
+                return;
+            }
+
+            if (users[enteredUsername] && users[enteredUsername].password === enteredPassword) {
+                fetch('/start-detection', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        twilio_sid: users[enteredUsername].twilio_sid,
+                        twilio_token: users[enteredUsername].twilio_token,
+                        twilio_number: users[enteredUsername].twilio_number,
+                        parent_number: users[enteredUsername].parent_number
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    alert("Login successful! Starting detection...");
+                    showVideoFeed();
+                })
+                .catch(error => alert("Error connecting to backend: " + error));
+            } else {
+                alert("Invalid username or password!");
+            }
+        }
+
+        // Show registration form
+        function showRegistration() {
+            document.getElementById("login-container").style.display = "none";
+            document.getElementById("data-container").style.display = "block";
+            clearDataForm(); // Clear fields for new registration
+        }
+
+        // Save user data
+        function saveUserData() {
+            let username = document.getElementById("username").value.trim();
+            let password = document.getElementById("password").value;
+            let twilioSid = document.getElementById("twilio_sid").value;
+            let twilioToken = document.getElementById("twilio_token").value;
+            let twilioNumber = document.getElementById("twilio_number").value;
+            let parentNumber = document.getElementById("parent_number").value;
+
+            if (!username || !password || !twilioSid || !twilioToken || !twilioNumber || !parentNumber) {
+                alert("Please fill in all fields.");
+                return;
+            }
+
+            let users = JSON.parse(localStorage.getItem("users")) || {};
+
+            if (users[username]) {
+                alert("Username already exists! Choose a different one.");
+                return;
+            }
+
+            users[username] = {
+                password: password,
+                twilio_sid: twilioSid,
+                twilio_token: twilioToken,
+                twilio_number: twilioNumber,
+                parent_number: parentNumber
+            };
+
+            localStorage.setItem("users", JSON.stringify(users));
+            fetch('/start-detection', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    twilio_sid: twilioSid,
+                    twilio_token: twilioToken,
+                    twilio_number: twilioNumber,
+                    parent_number: parentNumber
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert("User registered successfully! Starting detection...");
+                showVideoFeed();
+            })
+            .catch(error => alert("Error connecting to backend: " + error));
+        }
+
+        // Clear the data form fields
+        function clearDataForm() {
+            document.getElementById("username").value = "";
+            document.getElementById("password").value = "";
+            document.getElementById("twilio_sid").value = "";
+            document.getElementById("twilio_token").value = "";
+            document.getElementById("twilio_number").value = "";
+            document.getElementById("parent_number").value = "";
+        }
+
+        // Toggle info panel
+        function toggleInfo() {
+            var panel = document.getElementById("info-panel");
+            panel.style.display = panel.style.display === "none" || panel.style.display === "" ? "block" : "none";
+        }
+
+        // Create stars
+        function createStars() {
+            const sky = document.querySelector(".sky");
+            for (let i = 0; i < 50; i++) {
+                const star = document.createElement("div");
+                star.className = "star";
+                star.style.top = `${Math.random() * 100}vh`;
+                star.style.left = `${Math.random() * 100}vw`;
+                star.style.animationDelay = `${Math.random() * 2}s`;
+                sky.appendChild(star);
+            }
+        }
+
+        // Show login screen from welcome page
+        function showLogin() {
+            let users = JSON.parse(localStorage.getItem("users")) || {};
+            document.getElementById("welcome-container").style.display = "none";
+            if (Object.keys(users).length > 0) {
+                document.getElementById("login-container").style.display = "block";
+                document.getElementById("data-container").style.display = "none";
+            } else {
+                showRegistration();
+            }
+        }
+    </script>
+</body>
+</html>
